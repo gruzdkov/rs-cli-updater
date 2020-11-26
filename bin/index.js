@@ -48,26 +48,31 @@ async function updateProject() {
     const settings = getSettingsForProject()
     const browser = await puppeteer.launch()
     const page = await browser.newPage()
-    const basicAuthCreds = settings.basic_auth_creds || getSettings().basic_auth_creds
+    try {
+        const basicAuthCreds = settings.basic_auth_creds || getSettings().basic_auth_creds
 
-    if (!settings.skip_basic_auth) await page.authenticate(
-        { 'username': basicAuthCreds[0], 'password': basicAuthCreds[1] }
-    )
+        if (!settings.skip_basic_auth) await page.authenticate(
+            { 'username': basicAuthCreds[0], 'password': basicAuthCreds[1] }
+        )
 
-    await page.goto(settings.url)
-    console.log('Логинимся...🧞‍♀️')
-    await page.$eval('input[name=LOGIN]', (el, value) => el.value = value, settings.username)
-    await page.$eval('input[name=PASS]', (el, value) => el.value = value, settings.password)
-    await page.$eval('.login_logout.btn-block', (button) => button.click())
-    await page.waitForSelector('form[data-action="PULL"]')
-    console.log('Залогинились, сейчас спуллю...🧞')
-    await page.$eval('form[data-action="PULL"] button', (button) => button.click())
-    await page.waitForSelector('.levo_prelevo#mask')
-    console.log('Спуллено! 🧞‍♂️')
-    const resultConsoleElem = await page.$("#cnsl");
-    const resultText = await page.evaluate(element => element.value, resultConsoleElem);
-    console.log(resultText)
-    await browser.close()
+        await page.goto(settings.url)
+        console.log('Логинимся...🧞‍♀️')
+        await page.$eval('input[name=LOGIN]', (el, value) => el.value = value, settings.username)
+        await page.$eval('input[name=PASS]', (el, value) => el.value = value, settings.password)
+        await page.$eval('.login_logout.btn-block', (button) => button.click())
+        await page.waitForSelector('form[data-action="PULL"]')
+        console.log('Залогинились, сейчас спуллю...🧞')
+        await page.$eval('form[data-action="PULL"] button', (button) => button.click())
+        await page.waitForSelector('.levo_prelevo#mask')
+        console.log('Спуллено! 🧞‍♂️')
+        const resultConsoleElem = await page.$("#cnsl");
+        const resultText = await page.evaluate(element => element.value, resultConsoleElem);
+        console.log(resultText)
+    } catch (error) {
+        console.log('Не удалось сделать пулл. Или сеть отвалилась, или ci🤕')
+    } finally {
+        await browser.close()
+    }
 }
 
 async function fetchProject() {
